@@ -1,7 +1,5 @@
 #lang racket
-(require redex/reduction-semantics
-         redex/pict
-         #;(only-in unstable/match ==))
+(require redex/reduction-semantics)
 
 (provide (all-defined-out))
 
@@ -52,7 +50,7 @@
   (e ....
      (raw v @ m (v ...)))
     ;; eval syntax
-  (object (C (C [f loc] ...) ...))
+  (object ((C [f loc] ...) ...))
   (hv v
       object)
   (h mt
@@ -100,7 +98,7 @@
         (where ((v_0 ...) ...) ((default-value* (T_0 ...)) ...))
         (where (number_0 ...) ((length-bug (T_0 ...)) ...))
         (where ((loc_0 ...) ...) (h-malloc-n* h number_0 ...))
-        (where object (C (C_0 [f_0 loc_0] ...) ...))
+        (where object ((C_0 [f_0 loc_0] ...) ...))
         (where h_0 (h-extend* h [loc_0 -> v_0] ... ...))
         (where loc_1 (h-malloc h_0))
         (where h_1 (h-extend* h_0 [loc_1 -> object])))
@@ -113,7 +111,7 @@
         (μ h η v k)
         "field access"
         (where object (cast (h-lookup h loc) C))
-        (where loc_0 (field-lookup object f))
+        (where loc_0 (field-lookup object f C))
         (where v (h-lookup h loc_0)))
    
    ; method invocation
@@ -194,7 +192,7 @@
         (where loc_0 (η-lookup η x))
         (where (addr loc_1 C) (h-lookup h loc_0))
         (where object (cast (h-lookup h loc_1) C))
-        (where loc_2 (field-lookup object f))
+        (where loc_2 (field-lookup object f C))
         (where h_0 (h-extend* h [loc_2 -> v])))
  
    ; if-then-else
@@ -356,7 +354,7 @@
 
 (define-metafunction javalite
   restricted-field-lookup : object f -> loc
-  [(restricted-field-lookup (C_c
+  [(restricted-field-lookup (
                   (C_0 [f_0 loc_0] ...) ...
                   (C_t [f_t0 loc_t0] ...
                        [f_target loc_target]
@@ -371,17 +369,18 @@
                  (term (f_t1 ... f_1 ... ...)))))])
 
 (define-metafunction javalite
-  field-lookup : object f -> loc
-  [(field-lookup object f_target)
-   (restricted-field-lookup (restrict-object object) f_target)])
+  field-lookup : object f C -> loc
+  [(field-lookup object f_target C)
+   (restricted-field-lookup (restrict-object object C) f_target)])
 
 (define-metafunction javalite
-  restrict-object : object -> object
-  [(restrict-object (C_c (C_0 [f_0 loc_0] ...) ...
+  restrict-object : object C -> object
+  [(restrict-object (    (C_0 [f_0 loc_0] ...) ...
                          (C_c [f_c loc_c] ...)
-                         (C_1 [f_1 loc_1] ...) ...))
-   (C_c (C_0 [f_0 loc_0] ...) ...
-        (C_c [f_c loc_c] ...))])
+                         (C_1 [f_1 loc_1] ...) ...) C)
+   (    (C_0 [f_0 loc_0] ...) ...
+        (C_c [f_c loc_c] ...))
+   (side-condition (equal? (term C) (term C_c)))])
 
 (define-metafunction javalite
   class-name : CL -> C
@@ -411,8 +410,7 @@
 
 (define-metafunction javalite
   class-list-from-object : object -> (C ...)
-  [(class-list-from-object (C_0 (C_1 [f_1 loc_1] ...) ...)) 
-   ; Restrict out the current cast -- Object will be first class
+  [(class-list-from-object ((C_1 [f_1 loc_1] ...) ...)) 
    (C_1 ...)])
 
 (define-metafunction javalite
@@ -473,10 +471,10 @@
 
 (define-metafunction javalite
   cast : object C -> object
-  [(cast (C_1 (C_2 [f_2 loc_2] ...) ... 
+  [(cast (    (C_2 [f_2 loc_2] ...) ... 
               (C_3 [f_3 loc_3] ...) 
               (C_4 [f_4 loc_4] ...) ...) C_3)
-   (C_3 (C_2 [f_2 loc_2] ...) ... 
+   (    (C_2 [f_2 loc_2] ...) ... 
         (C_3 [f_3 loc_3] ...) 
         (C_4 [f_4 loc_4] ...) ...)])
 
@@ -484,8 +482,8 @@
   (define inner-cast?
     (term-match/single
      javalite
-     [(C_1 (C_2 [f_2 loc_2] ...) ...)
-      (term (C_1 C_2 ...))]))
+     [((C_2 [f_2 loc_2] ...) ...)
+      (term (C_2 ...))]))
   (if (member C_t (inner-cast? object)) #t #f))
 
 (define (cast?/->bool object C_t)
@@ -493,7 +491,7 @@
 
 (define-metafunction javalite
      instanceof* : object C -> v
-     [(instanceof* (C_1 (C_2 [f_2 loc_2] ...) ...) C_t)
+     [(instanceof* ((C_2 [f_2 loc_2] ...) ...) C_t)
       ,(->bool (member (term C_t) (term (C_2 ...))))])
 
 (define-metafunction javalite
