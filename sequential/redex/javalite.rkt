@@ -96,7 +96,7 @@
         (where (([T_0 f_0] ...) ...) (fields-parents+self μ C))
         (where (C_0 ...) (class-parents+self μ C))
         (where ((v_0 ...) ...) ((default-value* (T_0 ...)) ...))
-        (where (number_0 ...) ((length-bug (T_0 ...)) ...))
+        (where (number_0 ...) ((get-length (T_0 ...)) ...))
         (where ((loc_0 ...) ...) (h-malloc-n* h number_0 ...))
         (where object ((C_0 [f_0 loc_0] ...) ...))
         (where h_0 (h-extend* h [loc_0 -> v_0] ... ...))
@@ -242,8 +242,8 @@
 ; -----------------------------------------------------
 
 (define-metafunction javalite
-  length-bug : (any ...) -> number
-  [(length-bug (any_0 ...))
+  get-length : (any ...) -> number
+  [(get-length (any_0 ...))
    ,(length (term (any_0 ...)))])
   
 (define-metafunction javalite
